@@ -3,13 +3,11 @@ from datetime import datetime
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
-# OpenAI API 키 초기화
 OPENAI_API_KEY = st.secrets["openai"]["api_key"]
 if not OPENAI_API_KEY:
     st.error("OpenAI API key가 설정되어 있지 않습니다. 환경변수를 확인해주세요.")
     st.stop()
 
-# 상담 시나리오 (내부 프롬프트용 – 출력에는 포함되지 않음)
 CONSULTATION_SCENARIO = """
 1. 상담 시작 – 신뢰 형성
 안녕하세요, ○○ 어머님(아버님). 만나 뵙게 되어 반갑습니다. 저는 ○○반 담임 △△△ 교사입니다.
@@ -163,7 +161,7 @@ def generate_closing_message(role, chat_history):
     response = chat.invoke([{"role": "system", "content": closing_prompt}])
     return response.content.strip()
 
-# 각 역할별 응답 생성 시 한 메시지에는 하나의 질문과 하나의 주제만 포함하도록 지시
+
 def generate_parent_response(chat_history):
     greeting_line = ""
     if not st.session_state.get("greeting_sent", False):
