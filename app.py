@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
 # OpenAI API 키 초기화
