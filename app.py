@@ -46,7 +46,7 @@ CONSULTATION_SCENARIO = """
 def set_page_config():
     try:
         st.set_page_config(
-            page_title="학부모 상담 채팅", 
+            page_title="상담 채팅 시물레이션션", 
             page_icon="👨‍👩‍👧‍👦", 
             layout="wide"
         )
@@ -348,7 +348,7 @@ def main():
     st.sidebar.markdown("## 상담 정보 입력")
     with st.sidebar.form("info_form"):
         school_type = st.selectbox("학교급", ["초등학교", "중학교"])
-        gender = st.selectbox("성별", ["남성", "여성"])
+        gender = st.selectbox("성별", ["남학생", "여학생"])
         grade_options = (["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"]
                          if school_type == "초등학교" else ["1학년", "2학년", "3학년"])
         grade = st.selectbox("학년", grade_options)
