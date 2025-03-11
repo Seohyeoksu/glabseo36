@@ -3,13 +3,15 @@ from datetime import datetime
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 
+# OpenAI API 키 초기화
 OPENAI_API_KEY = st.secrets["openai"]["api_key"]
 if not OPENAI_API_KEY:
     st.error("OpenAI API key가 설정되어 있지 않습니다. 환경변수를 확인해주세요.")
     st.stop()
 
+# 상담 시나리오 (내부 프롬프트용 – 출력에는 포함되지 않음)
 CONSULTATION_SCENARIO = """
-1. 상담 시작 – 신뢰 형성
+1. 상담 시작 신뢰 형성
 안녕하세요, ○○ 어머님(아버님). 만나 뵙게 되어 반갑습니다. 저는 ○○반 담임 △△△ 교사입니다.
 오늘 상담을 통해 ○○이가 학교에서 잘 적응할 수 있도록 학부모님과 이야기를 나누고자 합니다.
 학기 초라서 아직 모든 학생을 깊이 파악하지는 못했지만, 학부모님께서 ○○이에 대해 알려주시면 학교에서도 더 잘 지도할 수 있을 것 같습니다.
@@ -44,23 +46,16 @@ CONSULTATION_SCENARIO = """
 def set_page_config():
     try:
         st.set_page_config(
-            page_title="상담 채팅 시뮬레이터", 
+            page_title="학부모 상담 채팅", 
             page_icon="👨‍👩‍👧‍👦", 
             layout="wide"
         )
     except Exception as e:
         st.error(f"페이지 설정 오류: {e}")
     st.markdown(
-        """
-        <style>
-        .main .block-container {
-            padding: 2rem;
-            max-width: 1200px;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-        </style>
-        """,
+        "<div style='text-align:center'><h1>👨‍👩‍👧‍👦 상담 채팅 시뮬레이터</h1>"
+        "<p>대화, 역할을 선택하여 메시지를 입력하면, 학부모 및 학생과의 상담에서 도움을 받을 수 있습니다.<br>"
+        "예: <b>선생님 -> 가상 학부모</b>, <b>학부모 -> 가상 선생님</b>, <b>학생 -> 가상 선생님</b>, <b>선생님 -> 가상 학생</b></p></div>",
         unsafe_allow_html=True,
     )
 
@@ -72,6 +67,7 @@ def generate_system_prompt(data):
 - 성별: {data.get('gender', '')}
 - 학년: {data.get('grade', '')}
 - 주요 상담 내용: {data.get('counseling_issue', '')}
+- 학부모 유형: {data.get('parent_type', '')}
 """
     return prompt
 
@@ -161,15 +157,19 @@ def generate_closing_message(role, chat_history):
     response = chat.invoke([{"role": "system", "content": closing_prompt}])
     return response.content.strip()
 
-
+# 각 역할별 응답 생성 시 한 메시지에는 하나의 질문과 하나의 주제만 포함하도록 지시
 def generate_parent_response(chat_history):
+    # 학부모 유형 변수를 프롬프트에 삽입
+    parent_type = st.session_state.data.get("parent_type", "미지정")
+    parent_type_line = f"[학부모 유형: {parent_type}] "
     greeting_line = ""
     if not st.session_state.get("greeting_sent", False):
         greeting_line = "안녕하세요, 만나 뵙게 되어 반갑습니다. "
         st.session_state.greeting_sent = True
     parent_instruction = (
-        greeting_line +
+        greeting_line + parent_type_line +
         "당신은 인격과 개성이 뚜렷한 가상 학부모입니다. 선생님이 최근에 언급한 내용을 포함해, "
+        "{parent_type} 유형에 알맞은 스타일로 이야기 하면 좋겠습니다."
         "자녀의 학교생활이나 가정생활에 관한 구체적인 고민, 질문, 의견을 진솔하게 작성하세요. "
         "이전 대화 내용과 연결해서 자연스럽게 이어가 주세요. "
         "한 번의 메시지에는 하나의 질문과 하나의 내용에 대해서만 이야기해 주세요."
@@ -197,6 +197,7 @@ def generate_teacher_response(chat_history):
         "자녀의 학교생활과 가정생활에 관한 고민, 질문, 의견에 공감하고 구체적인 조언을 포함한 답변을 작성하세요. "
         "이전 대화 내용과 연결해서 자연스럽게 이어가 주세요. "
         "한 번의 메시지에는 하나의 질문과 하나의 주제에 대해서만 답변해 주세요."
+        "상담심리학 이론에(예: 행동주의, 인간중심, 의사교류분석, 계슈탈트, 합리적 정서행동치료 등)기반하여 답변하면 좋겠어. "
     )
     history = chat_history + [{"role": "system", "content": teacher_instruction}]
     recent_history = get_recent_context(history)
@@ -231,10 +232,14 @@ def generate_student_response(chat_history):
     response = chat.invoke(recent_history)
     return response.content.strip()
 
+# 추천 대화 예시 생성 시 유형(예: 공격적, 수용적 등) 정보를 포함하도록 수정
 def generate_teacher_input_suggestions(chat_history):
     suggestion_instruction = (
         "당신은 인격과 경험이 풍부한 선생님입니다. 지금까지의 대화 내용을 반영하여, "
         "가상 학부모에게 전달할 추천 대화 예시 3가지를 아래 형식에 맞추어 제시해주세요. "
+        "각 예시는 상담심리학 이론에 기반에서 유형이(예: 행동주의, 인간중심, 의사교류분석, 계슈탈트, 합리적 정서행동치료료) 구분되어 있어야 합니다. "
+        "상담심리학 이론에 따른 구분은 명시적으로 학부모에게 제시할 필요는 절대 없고, 대화가 이론적 배경에 따라서 이루어지면 좋겠어."
+        "{parent_type} 유형에 알맞게 대화를 잘 이어가고 학부모의 유형에 알맞게 학부모의 질문에 적절하게 응답하면 좋겠어."
         "출력 시 상담 정보는 포함하지 말고, 각 예시는 '예시 A:', '예시 B:', '예시 C:'로 구분하여 작성하세요.\n\n"
         "【예시 대화 형식】\n"
         "예시 A: [대화 예시 내용]\n"
@@ -245,10 +250,10 @@ def generate_teacher_input_suggestions(chat_history):
     history = chat_history + [{"role": "system", "content": suggestion_instruction}]
     recent_history = get_recent_context(history)
     chat = ChatOpenAI(
-         openai_api_key=OPENAI_API_KEY,
-         model="gpt-4o",
-         temperature=0.7,
-         max_tokens=800
+        openai_api_key=OPENAI_API_KEY,
+        model="gpt-4o",
+        temperature=0.7,
+        max_tokens=800
     )
     response = chat.invoke(recent_history)
     suggestions_text = response.content.strip()
@@ -257,8 +262,9 @@ def generate_teacher_input_suggestions(chat_history):
 
 def generate_parent_input_suggestions(chat_history):
     suggestion_instruction = (
-        "당신은 인격이 부여된 따뜻한 학부모입니다. 지금까지의 대화 내용을 반영하여, "
+        "당신은 인격이 부여된 학부모입니다. 지금까지의 대화 내용을 반영하여, "
         "가상 선생님에게 전달할 추천 대화 예시 3가지를 아래 형식에 맞추어 제시해주세요. "
+        "{parent_type} 유형에 알맞은 스타일로 이야기 하여 주세요."
         "출력 시 상담 정보는 포함하지 말고, 각 예시는 '예시 A:', '예시 B:', '예시 C:'로 구분하여 작성하세요.\n\n"
         "【예시 대화 형식】\n"
         "예시 A: [대화 예시 내용]\n"
@@ -269,10 +275,10 @@ def generate_parent_input_suggestions(chat_history):
     history = chat_history + [{"role": "system", "content": suggestion_instruction}]
     recent_history = get_recent_context(history)
     chat = ChatOpenAI(
-         openai_api_key=OPENAI_API_KEY,
-         model="gpt-4o",
-         temperature=0.7,
-         max_tokens=800
+        openai_api_key=OPENAI_API_KEY,
+        model="gpt-4o",
+        temperature=0.7,
+        max_tokens=800
     )
     response = chat.invoke(recent_history)
     suggestions_text = response.content.strip()
@@ -293,10 +299,10 @@ def generate_student_input_suggestions(chat_history):
     history = chat_history + [{"role": "system", "content": suggestion_instruction}]
     recent_history = get_recent_context(history)
     chat = ChatOpenAI(
-         openai_api_key=OPENAI_API_KEY,
-         model="gpt-4o",
-         temperature=0.7,
-         max_tokens=800
+        openai_api_key=OPENAI_API_KEY,
+        model="gpt-4o",
+        temperature=0.7,
+        max_tokens=800
     )
     response = chat.invoke(recent_history)
     suggestions_text = response.content.strip()
@@ -317,10 +323,10 @@ def generate_teacher_suggestions(chat_history):
     history = chat_history + [{"role": "system", "content": suggestion_instruction}]
     recent_history = get_recent_context(history)
     chat = ChatOpenAI(
-         openai_api_key=OPENAI_API_KEY,
-         model="gpt-4o",
-         temperature=0.7,
-         max_tokens=800
+        openai_api_key=OPENAI_API_KEY,
+        model="gpt-4o",
+        temperature=0.7,
+        max_tokens=800
     )
     response = chat.invoke(recent_history)
     suggestions_text = response.content.strip()
@@ -330,27 +336,22 @@ def generate_teacher_suggestions(chat_history):
 def main():
     set_page_config()
     
-    # 세션 상태 초기화
+    # 사이드바 상담 정보 입력 (학부모 유형 선택 추가)
     if "data" not in st.session_state:
         st.session_state.data = {}
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     
-    st.markdown(
-        "<div style='text-align:center'><h1>👨‍👩‍👧‍👦 상담 채팅 시뮬레이터</h1>"
-        "<p>대화 역할을 선택하여 메시지를 입력하면, 인격과 개성이 반영된 상대방이 이전 대화 맥락과 상담 정보를 기억하며 자연스럽게 대화를 이어갑니다.<br>"
-        "예: <b>선생님 -> 가상 학부모</b>, <b>학부모 -> 가상 선생님</b>, <b>학생 -> 가상 선생님</b>, <b>선생님 -> 가상 학생</b></p></div>",
-        unsafe_allow_html=True,
-    )
-    
     st.sidebar.markdown("## 상담 정보 입력")
     with st.sidebar.form("info_form"):
         school_type = st.selectbox("학교급", ["초등학교", "중학교"])
-        gender = st.selectbox("성별", ["남학생", "여학생"])
+        gender = st.selectbox("성별", ["남학생", "여학생생"])
         grade_options = (["1학년", "2학년", "3학년", "4학년", "5학년", "6학년"]
                          if school_type == "초등학교" else ["1학년", "2학년", "3학년"])
         grade = st.selectbox("학년", grade_options)
         counseling_issue = st.text_area("상담할 주요 내용", placeholder="예) 학교 생활, 친구 관계, 학업 부담 등", height=100)
+        # 학부모 유형 선택 (예: 공격적, 수용적, 중립적)
+        parent_type = st.selectbox("학부모 유형", ["공격적", "수용적", "중립적"])
         submit_info = st.form_submit_button("상담 정보 저장")
     
     if submit_info:
@@ -359,6 +360,7 @@ def main():
             "gender": gender,
             "grade": grade,
             "counseling_issue": counseling_issue,
+            "parent_type": parent_type,
             "consultation_date": datetime.now().strftime("%Y-%m-%d")
         }
         st.session_state.chat_history = []
@@ -388,8 +390,11 @@ def main():
                 avatar = mode_config[msg_mode]["input_avatar"]
                 st.chat_message("user", avatar=avatar).write(message["content"])
     
+    # 새 메시지 입력 시 기존 추천 예시 삭제
     user_input = st.chat_input("메시지를 입력하세요")
     if user_input:
+        if "teacher_suggestions" in st.session_state:
+            del st.session_state.teacher_suggestions
         st.session_state.chat_history.append({"role": "user", "content": user_input, "mode": role_mode})
         if role_mode == "선생님 -> 가상 학부모":
             with st.spinner("가상 학부모 응답 생성 중..."):
@@ -434,4 +439,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
