@@ -46,7 +46,7 @@ CONSULTATION_SCENARIO = """
 def set_page_config():
     try:
         st.set_page_config(
-            page_title="상담 채팅 시물레이션션", 
+            page_title="상담 채팅 시뮬레이터", 
             page_icon="👨‍👩‍👧‍👦", 
             layout="wide"
         )
@@ -339,7 +339,7 @@ def main():
         st.session_state.chat_history = []
     
     st.markdown(
-        "<div style='text-align:center'><h1>👨‍👩‍👧‍👦 학부모 상담 채팅</h1>"
+        "<div style='text-align:center'><h1>👨‍👩‍👧‍👦 상담 채팅 시뮬레이터</h1>"
         "<p>대화 역할을 선택하여 메시지를 입력하면, 인격과 개성이 반영된 상대방이 이전 대화 맥락과 상담 정보를 기억하며 자연스럽게 대화를 이어갑니다.<br>"
         "예: <b>선생님 -> 가상 학부모</b>, <b>학부모 -> 가상 선생님</b>, <b>학생 -> 가상 선생님</b>, <b>선생님 -> 가상 학생</b></p></div>",
         unsafe_allow_html=True,
