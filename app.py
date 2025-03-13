@@ -359,7 +359,7 @@ def generate_role_system_prompt(role, data):
     big_five_dict = data.get("big_five_traits", {})
     big_five_text = generate_big_five_summary(big_five_dict) if big_five_dict else ""
 
-    student_name = data.get("student_name", "우진")
+    student_name = data.get("student_name", "")
     gender = data.get("gender", "")
     grade = data.get("grade", "")
     school_type = data.get("school_type", "")
@@ -455,7 +455,7 @@ def initialize_chat_history(data, role):
 # 대화 마무리/종료 메시지 생성 함수
 # ------------------------
 def generate_closing_message(role, chat_history):
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -543,7 +543,7 @@ def generate_closing_message(role, chat_history):
 # 역할별 대화 생성 함수
 # ------------------------
 def generate_parent_response(chat_history):
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -588,7 +588,7 @@ def generate_parent_response(chat_history):
 
 
 def generate_teacher_response(chat_history):
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -639,7 +639,7 @@ def generate_teacher_response(chat_history):
 
 
 def generate_teacher_response_for_student(chat_history):
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -688,7 +688,7 @@ def generate_teacher_response_for_student(chat_history):
 
 
 def generate_student_response(chat_history):
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -738,7 +738,7 @@ def generate_teacher_input_suggestions(chat_history):
     conv_length = st.session_state.data.get("conversation_length", "단계 2 (보통)")
     length_guideline = CONVERSATION_LENGTH_GUIDELINES.get(conv_length, "")
 
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -843,7 +843,7 @@ def generate_teacher_input_suggestions_for_student(chat_history):
     conv_length = st.session_state.data.get("conversation_length", "단계 2 (보통)")
     length_guideline = CONVERSATION_LENGTH_GUIDELINES.get(conv_length, "")
 
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -946,7 +946,7 @@ def generate_parent_input_suggestions(chat_history):
     conv_length = st.session_state.data.get("conversation_length", "단계 2 (보통)")
     length_guideline = CONVERSATION_LENGTH_GUIDELINES.get(conv_length, "")
 
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -1036,7 +1036,7 @@ def generate_student_input_suggestions(chat_history):
     conv_length = st.session_state.data.get("conversation_length", "단계 2 (보통)")
     length_guideline = CONVERSATION_LENGTH_GUIDELINES.get(conv_length, "")
 
-    student_name = st.session_state.data.get("student_name", "우진")
+    student_name = st.session_state.data.get("student_name", "")
     gender = st.session_state.data.get("gender", "")
     grade = st.session_state.data.get("grade", "")
     school_type = st.session_state.data.get("school_type", "")
@@ -1217,7 +1217,7 @@ def main():
             else:
                 grade_options = ["1학년", "2학년", "3학년"]
             grade = st.selectbox("학년", grade_options)
-            student_name = st.text_input("학생 이름", value="우진")
+            student_name = st.text_input("학생 이름", value="")
 
         st.markdown("#### 상담 설정")
         counseling_issue = st.text_area(
@@ -1280,7 +1280,7 @@ def main():
             "counseling_issue": counseling_issue,
             "parent_attitude": parent_attitude,
             "conversation_length": conversation_length,
-            "student_name": student_name if student_name else "우진",
+            "student_name": student_name if student_name else "",
             "student_mbti": student_mbti,
             "teacher_mbti": teacher_mbti,
             "consultation_date": datetime.now().strftime("%Y-%m-%d"),
