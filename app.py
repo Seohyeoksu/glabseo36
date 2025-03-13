@@ -1491,7 +1491,7 @@ def main():
 def set_page_config():
     try:
         st.set_page_config(
-            page_title="리얼얼 상담 시뮬레이터", page_icon="👨‍👩‍👧‍👦", layout="wide"
+            page_title="리얼 상담 시뮬레이터", page_icon="👨‍👩‍👧‍👦", layout="wide"
         )
     except Exception as e:
         st.error(f"페이지 설정 오류: {e}")
